@@ -1,11 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibUsbDotNet" Version="3.0.81-alpha" />
+    <Compile Remove="UsbSession.Tests\**" />
+    <EmbeddedResource Remove="UsbSession.Tests\**" />
+    <None Remove="UsbSession.Tests\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="LibUsbDotNet" Version="3.0.81-alpha" />
+  </ItemGroup>
 </Project>
