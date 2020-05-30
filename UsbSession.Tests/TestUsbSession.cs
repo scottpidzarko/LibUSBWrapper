@@ -1,19 +1,38 @@
 using Xunit;
+using Xunit.Abstractions;
 
 namespace UsbSession.Tests
 {
     public class TestUsbSession
     {
+        private readonly ITestOutputHelper output;
+
+        public TestUsbSession(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
         public void TestOpenInvokeClose()
         {
             UsbSession s = new UsbSession();
+            output.WriteLine("Opening Session");
             s.Open();
             Assert.True(s.TestSession());
-            s.Invoke("");
-            s.Invoke("ECHO OFF");
-            s.ClearBuffer();
-            s.Invoke("VER -V");
+            output.WriteLine("Session opened. Sending CRLF");
+            output.WriteLine(s.Invoke(""));
+            output.WriteLine("Clearing Buffer");
+            s.ClearReadBuffer();
+            output.WriteLine("Buffer cleared. Logging in, sending username");
+            output.WriteLine(s.Invoke("admin"));
+            output.WriteLine("Sending p/w");
+            output.WriteLine(s.Invoke("p@ssword"));
+            System.Threading.Thread.Sleep(1000);
+            output.WriteLine("Sending ECHO OFF");
+            output.WriteLine(s.Invoke("ECHO OFF"));
+            output.WriteLine("Running two test commands");
+            output.WriteLine(s.Invoke("VER -V"));
+            output.WriteLine(s.Invoke("HOSTNAME"));
             s.Close();
             Assert.False(s.TestSession());
         }
@@ -25,8 +44,9 @@ namespace UsbSession.Tests
             Assert.True(s.TestSession());
             s.Invoke("");
             s.Invoke("ECHO OFF");
-            s.ClearBuffer();
-            s.Invoke("VER -V");
+            s.ClearReadBuffer();
+            output.WriteLine(s.Invoke("VER -V"));
+            output.WriteLine(s.Invoke("HOSTNAME"));
             s.Close();
             Assert.False(s.TestSession());
 
@@ -35,8 +55,9 @@ namespace UsbSession.Tests
             Assert.True(a.TestSession());
             a.Invoke("");
             a.Invoke("ECHO OFF");
-            a.ClearBuffer();
-            a.Invoke("VER -V");
+            a.ClearReadBuffer();
+            output.WriteLine(a.Invoke("VER -V"));
+            output.WriteLine(a.Invoke("HOSTNAME"));
             a.Close();
             Assert.False(a.TestSession());
               
@@ -45,8 +66,9 @@ namespace UsbSession.Tests
             Assert.True(b.TestSession());
             b.Invoke("");
             b.Invoke("ECHO OFF");
-            b.ClearBuffer();
-            b.Invoke("VER -V");
+            b.ClearReadBuffer();
+            output.WriteLine(b.Invoke("VER -V"));
+            output.WriteLine(b.Invoke("HOSTNAME"));
             b.Close();
             Assert.False(s.TestSession());
         }
@@ -59,8 +81,9 @@ namespace UsbSession.Tests
             Assert.True(s.TestSession());
             s.Invoke("");
             s.Invoke("ECHO OFF");
-            s.ClearBuffer();
-            s.Invoke("VER -V");
+            s.ClearReadBuffer();
+            output.WriteLine(s.Invoke("VER -V"));
+            output.WriteLine(s.Invoke("HOSTNAME"));
             s.Close();
             Assert.False(s.TestSession());
             s.Exit();

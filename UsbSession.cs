@@ -66,7 +66,7 @@ namespace UsbSession
 
         }
 
-        public void ClearBuffer()
+        public void ClearReadBuffer()
         {
             if (Device == null || !Device.IsOpen)
             {
@@ -88,9 +88,11 @@ namespace UsbSession
                 string TerminatedCommand = Command + "\r\n";
                 string response = "";
 
+                //Write the command
                 ErrorCode ec = writer.Write(Encoding.ASCII.GetBytes(TerminatedCommand), 3000, out int bytesWritten);
                 if (ec != ErrorCode.None) throw new Exception("Writer error");// switchUsbDevice.LastErrorString);
 
+                //Read the response
                 byte[] readBuffer = new byte[1];
                 while (ec == ErrorCode.None)
                 {
@@ -123,6 +125,19 @@ namespace UsbSession
                 this.Close();
                 throw ex;
             }
+        }
+
+        /// <summary>
+        /// Read x bytes the RX buffer.
+        /// </summary>
+        /// <returns>Number of bytes read</returns>
+        public int Read()
+        {
+            byte[] readBuffer = new byte[1000];
+                   
+            reader.Read(readBuffer, 0, out int bytesRead);
+            
+            return bytesRead;
         }
 
         public void Close()
