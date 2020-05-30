@@ -12,6 +12,7 @@ namespace UsbSession.Tests
             Assert.True(s.TestSession());
             s.Invoke("");
             s.Invoke("ECHO OFF");
+            s.ClearBuffer();
             s.Invoke("VER -V");
             s.Close();
             Assert.False(s.TestSession());
@@ -24,6 +25,7 @@ namespace UsbSession.Tests
             Assert.True(s.TestSession());
             s.Invoke("");
             s.Invoke("ECHO OFF");
+            s.ClearBuffer();
             s.Invoke("VER -V");
             s.Close();
             Assert.False(s.TestSession());
@@ -33,6 +35,7 @@ namespace UsbSession.Tests
             Assert.True(a.TestSession());
             a.Invoke("");
             a.Invoke("ECHO OFF");
+            a.ClearBuffer();
             a.Invoke("VER -V");
             a.Close();
             Assert.False(a.TestSession());
@@ -42,6 +45,7 @@ namespace UsbSession.Tests
             Assert.True(b.TestSession());
             b.Invoke("");
             b.Invoke("ECHO OFF");
+            b.ClearBuffer();
             b.Invoke("VER -V");
             b.Close();
             Assert.False(s.TestSession());
@@ -55,6 +59,7 @@ namespace UsbSession.Tests
             Assert.True(s.TestSession());
             s.Invoke("");
             s.Invoke("ECHO OFF");
+            s.ClearBuffer();
             s.Invoke("VER -V");
             s.Close();
             Assert.False(s.TestSession());

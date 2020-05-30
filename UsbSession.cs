@@ -66,6 +66,16 @@ namespace UsbSession
 
         }
 
+        public void ClearBuffer()
+        {
+            if (Device == null || !Device.IsOpen)
+            {
+                throw new Exception("Open the device before trying to clear the buffer");
+            }
+
+            reader.ReadFlush();
+        }
+
         public string Invoke(string Command)
         {
             try
