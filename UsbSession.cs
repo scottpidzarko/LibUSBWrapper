@@ -1,7 +1,9 @@
 ﻿using LibUsbDotNet;
 using LibUsbDotNet.Main;
 using System;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace UsbSession
 {
@@ -14,21 +16,25 @@ namespace UsbSession
 
         public UsbSession()
         {
-            Finder = new UsbDeviceFinder(0x14BE, 0x9);
-            //TODO Device.Descriptor contains "Crestron"
-            Device = UsbDevice.OpenUsbDevice(Finder);
-           /* if (CrestronDevices.Count() == 0)
+            UsbRegDeviceList AllDevices = UsbDevice.AllDevices; 
+            UsbRegDeviceList CrestronDevices = AllDevices.FindAll( d => Regex.Match(d.Name,"Crestron*").Success );
+ 
+            if (CrestronDevices.Count == 0)
             {
                 throw new Exception("No Crestron Devices Present");
             }
-            else if (CrestronDevices.Count() > 1)
+            else if (CrestronDevices.Count > 1)
             {
                 throw new Exception("More than one Crestron device present, please only connect the one you want to connect to");
             }
             else
             {
-                Device = CrestronDevices.FirstOrDefault();
-            }*/
+                //RMC3 has a device ID of 0x9
+                //Will document others here.
+                //Crestron Vendor ID is 0x14BE
+                Finder = new UsbDeviceFinder(0x14BE);
+                Device = UsbDevice.OpenUsbDevice(Finder);
+            }
         }
 
         public void Open()
