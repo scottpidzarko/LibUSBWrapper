@@ -143,6 +143,39 @@ namespace UsbSession
             }
         }
 
+        public void Exit()
+        {
+            if (Device != null)
+            {
+                if (Device.IsOpen)
+                {
+                    // If this is a "whole" usb device (libusb-win32, linux libusb-1.0)
+                    // it exposes an IUsbDevice interface. If not (WinUSB) the 
+                    // 'wholeUsbDevice' variable will be null indicating this is 
+                    // an interface of a device; it does not require or support 
+                    // configuration and interface selection.
+                    IUsbDevice wholeUsbDevice = Device as IUsbDevice;
+                    if (!ReferenceEquals(wholeUsbDevice, null))
+                    {
+                        // Release interface #0.
+                        wholeUsbDevice.ReleaseInterface(0);
+                    }
+
+                    Device.Close();
+                }
+                Device = null;
+
+                // Free usb resources - Similar to unplugging the usb
+                UsbDevice.Exit();
+            }
+            else
+            {
+                // Free usb resources - Similar to unplugging the usb
+                UsbDevice.Exit();
+            }
+        }
+        
+
         public bool TestSession()
         {
             if(Device is object)

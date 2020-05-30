@@ -46,5 +46,19 @@ namespace UsbSession.Tests
             b.Close();
             Assert.False(s.TestSession());
         }
+
+        [Fact]
+        public void TestOpenInvokeCloseExit()
+        {
+            UsbSession s = new UsbSession();
+            s.Open();
+            Assert.True(s.TestSession());
+            s.Invoke("");
+            s.Invoke("ECHO OFF");
+            s.Invoke("VER -V");
+            s.Close();
+            Assert.False(s.TestSession());
+            s.Exit();
+        }
     }
 }
