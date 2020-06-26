@@ -24,9 +24,9 @@ namespace UsbSession.Tests
             output.WriteLine("Clearing Buffer");
             s.ClearReadBuffer();
             output.WriteLine("Buffer cleared. Logging in, sending username");
-            output.WriteLine(s.Invoke("admin"));
+            output.WriteLine(s.Invoke("ael"));
             output.WriteLine("Sending p/w");
-            output.WriteLine(s.Invoke("p@ssword"));
+            output.WriteLine(s.Invoke("Welcome2AEL"));
             System.Threading.Thread.Sleep(1000);
             output.WriteLine("Sending ECHO OFF");
             output.WriteLine(s.Invoke("ECHO OFF"));
@@ -36,6 +36,26 @@ namespace UsbSession.Tests
             s.Close();
             Assert.False(s.TestSession());
         }
+
+        [Fact]
+        public void TestOpenInvokeWithPromptAndClose()
+        {
+            UsbSession s = new UsbSession();
+            output.WriteLine("Opening Session");
+            s.Open();
+            Assert.True(s.TestSession());
+            output.WriteLine("Session opened. Sending CRLF");
+            output.WriteLine(s.Invoke(""));
+            output.WriteLine("Clearing Buffer");
+            s.ClearReadBuffer();
+            output.WriteLine("Buffer cleared.");
+            output.WriteLine("Running two test commands");
+            output.WriteLine(s.Invoke("VER -V",">"));
+            output.WriteLine(s.Invoke("HOSTNAME",">"));
+            s.Close();
+            Assert.False(s.TestSession());
+        }
+
         [Fact]
         public void TestRepeatedOpenInvokeClose()
         {

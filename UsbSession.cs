@@ -14,6 +14,12 @@ namespace UsbSession
         private UsbEndpointWriter writer;
         private UsbDeviceFinder Finder;
 
+        /// <summary>
+        /// Constructor looks for a single Crestron device connected to system and initializes resources for interfacing with it
+        /// </summary>
+        /// <throws>
+        /// Exception thrown if there are no Crestron devices or more than one Crestron device. Currently the library doesn't work with multiple Crestron USB devices
+        /// </throws>
         public UsbSession()
         {
             UsbRegDeviceList AllDevices = UsbDevice.AllDevices; 
@@ -37,6 +43,9 @@ namespace UsbSession
             }
         }
 
+        /// <summary>
+        /// Opens a single Crestron USB device for sending a command to. Does not force flush buffers.
+        /// </summary>
         public void Open()
         {
             try
@@ -72,6 +81,9 @@ namespace UsbSession
 
         }
 
+        /// <summary>
+        /// Flush the Read buffer for the USB device
+        /// </summary>
         public void ClearReadBuffer()
         {
             if (Device == null || !Device.IsOpen)
@@ -82,6 +94,11 @@ namespace UsbSession
             reader.ReadFlush();
         }
 
+        /// <summary>
+        /// Invokes a command on the console of the Crestron device. 
+        /// </summary>
+        /// <param name="Command">Console command, as typed out on the console. Do not add a LF or CR at the end.</param>
+        /// <returns>Output of the command to console.</returns>
         public string Invoke(string Command)
         {
             try
@@ -134,7 +151,68 @@ namespace UsbSession
         }
 
         /// <summary>
-        /// Read x bytes the RX buffer.
+        /// Invokes a command on the console of the Crestron device. 
+        /// </summary>
+        /// <param name="Command">Console command, as typed out on the console. Do not add a LF or CR at the end.</param>
+        /// <param name="Prompt">  Specifies the prompt to wait for in the response. This may be a character or a string 
+        /// but must be entered using a regular expression. Defaults to the right angle bracket '>'.</param>
+        /// <returns>Output of the command to console until the "prompt" is encountered</returns>
+        public string Invoke(string Command, string Prompt)
+        {
+            try
+            {
+                if (Device == null || !Device.IsOpen)
+                {
+                    throw new Exception("Open the device before invoking a command");
+                }
+
+                //Convert the Prompt to a regex
+                Regex regex = new Regex(Prompt);
+
+                string TerminatedCommand = Command + "\r\n";
+                string response = "";
+
+                //Write the command
+                ErrorCode ec = writer.Write(Encoding.ASCII.GetBytes(TerminatedCommand), 3000, out int bytesWritten);
+                if (ec != ErrorCode.None) throw new Exception("Writer error");// switchUsbDevice.LastErrorString);
+
+                //Read the response
+                byte[] readBuffer = new byte[1];
+                while (ec == ErrorCode.None)
+                {
+                    // If the device hasn't sent data in the last 100 milliseconds,
+                    // a timeout error (ec = IoTimedOut) will occur. 
+                    ec = reader.Read(readBuffer, 100, out int bytesRead);
+
+                    //Don't want to throw this exception, authentication may be enabled!
+                    //if (bytesRead == 0) throw new Exception("No more bytes!");
+                    if (bytesRead == 0)
+                    {
+                        return response;
+                    }
+
+                    // Write that output to the console.
+                    //Console.Write(Encoding.Default.GetString(readBuffer, 0, bytesRead));
+
+                    string newChar = Encoding.ASCII.GetString(readBuffer, 0, bytesRead);
+                    response += newChar;
+                    if (regex.Match(response).Success)
+                    {
+                        return response;
+                    }
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                this.Close();
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// Read bytes the RX buffer.
         /// </summary>
         /// <returns>Number of bytes read</returns>
         public int Read()
@@ -146,6 +224,9 @@ namespace UsbSession
             return bytesRead;
         }
 
+        /// <summary>
+        /// Closes a USB device and disposes of resources and handles. Does not completely free it from the underlying OS - call Exit() for that
+        /// </summary>
         public void Close()
         {
             if (Device != null)
@@ -174,6 +255,10 @@ namespace UsbSession
             }
         }
 
+        /// <summary>
+        /// Free the USB Resources - similar to unplugging the usb or "Safely ejecting"
+        /// Calls close() if the device is still "open"
+        /// </summary>
         public void Exit()
         {
             if (Device != null)
@@ -206,7 +291,10 @@ namespace UsbSession
             }
         }
         
-
+        /// <summary>
+        /// Test if the USB device has been opened with Open()
+        /// </summary>
+        /// <returns>True if the device is Open and ready to send commands to with Invoke(), and false otherwise</returns>
         public bool TestSession()
         {
             if(Device is object)
