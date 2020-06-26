@@ -24,9 +24,9 @@ namespace UsbSession.Tests
             output.WriteLine("Clearing Buffer");
             s.ClearReadBuffer();
             output.WriteLine("Buffer cleared. Logging in, sending username");
-            output.WriteLine(s.Invoke("ael"));
+            output.WriteLine(s.Invoke("crestron"));
             output.WriteLine("Sending p/w");
-            output.WriteLine(s.Invoke("Welcome2AEL"));
+            output.WriteLine(s.Invoke("")); //Blank p/w
             System.Threading.Thread.Sleep(1000);
             output.WriteLine("Sending ECHO OFF");
             output.WriteLine(s.Invoke("ECHO OFF"));
