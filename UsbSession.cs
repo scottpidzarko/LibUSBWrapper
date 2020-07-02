@@ -23,7 +23,7 @@ namespace UsbSession
         public UsbSession()
         {
             UsbRegDeviceList AllDevices = UsbDevice.AllDevices; 
-            UsbRegDeviceList CrestronDevices = AllDevices.FindAll( d => Regex.Match(d.Name,"Crestron*").Success );
+            UsbRegDeviceList CrestronDevices = AllDevices.FindAll( d => (Regex.Match(d.Name,"Crestron*").Success || (d.Vid == 0x14BE) ) );
  
             if (CrestronDevices.Count == 0)
             {
@@ -72,6 +72,7 @@ namespace UsbSession
 
                 writer = Device.OpenEndpointWriter(WriteEndpointID.Ep02); //02
                 reader = Device.OpenEndpointReader(ReadEndpointID.Ep01); //129, but looks like crestron also supports 131?
+                //reader = Device.OpenEndpointReader(ReadEndpointID.Ep03); //131
 
             }
             catch (Exception ex)
@@ -98,66 +99,10 @@ namespace UsbSession
         /// Invokes a command on the console of the Crestron device. 
         /// </summary>
         /// <param name="Command">Console command, as typed out on the console. Do not add a LF or CR at the end.</param>
-        /// <returns>Output of the command to console.</returns>
-        public string Invoke(string Command)
-        {
-            try
-            {
-                if (Device == null || !Device.IsOpen)
-                {
-                    throw new Exception("Open the device before invoking a command");
-                }
-
-                string TerminatedCommand = Command + "\r\n";
-                string response = "";
-
-                //Write the command
-                ErrorCode ec = writer.Write(Encoding.ASCII.GetBytes(TerminatedCommand), 3000, out int bytesWritten);
-                if (ec != ErrorCode.None) throw new Exception("Writer error");// switchUsbDevice.LastErrorString);
-
-                //Read the response
-                byte[] readBuffer = new byte[1];
-                while (ec == ErrorCode.None)
-                {
-                    // If the device hasn't sent data in the last 100 milliseconds,
-                    // a timeout error (ec = IoTimedOut) will occur. 
-                    ec = reader.Read(readBuffer, 100, out int bytesRead);
-
-                    //Don't want to throw this exception, authentication may be enabled!
-                    //if (bytesRead == 0) throw new Exception("No more bytes!");
-                    if (bytesRead == 0)
-                    {
-                        return response;
-                    }
-
-                    // Write that output to the console.
-                    //Console.Write(Encoding.Default.GetString(readBuffer, 0, bytesRead));
-
-                    string newChar = Encoding.ASCII.GetString(readBuffer, 0, bytesRead);
-                    response += newChar;
-                    if (newChar.Equals(">"))
-                    {
-                        return response;
-                    }
-                }
-
-                return response;
-            }
-            catch (Exception ex)
-            {
-                this.Close();
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Invokes a command on the console of the Crestron device. 
-        /// </summary>
-        /// <param name="Command">Console command, as typed out on the console. Do not add a LF or CR at the end.</param>
         /// <param name="Prompt">  Specifies the prompt to wait for in the response. This may be a character or a string 
         /// but must be entered using a regular expression. Defaults to the right angle bracket '>'.</param>
         /// <returns>Output of the command to console until the "prompt" is encountered</returns>
-        public string Invoke(string Command, string Prompt)
+        public string Invoke(string Command, string Prompt = ">")
         {
             try
             {
@@ -177,12 +122,15 @@ namespace UsbSession
                 if (ec != ErrorCode.None) throw new Exception("Writer error");// switchUsbDevice.LastErrorString);
 
                 //Read the response
-                byte[] readBuffer = new byte[1];
+                //According to libusb mailing lists they suggest this buffer be a multiple of the endpoint interface
+                //max transfer size (512 in this case)
+                byte[] readBuffer = new byte[1024];
                 while (ec == ErrorCode.None)
                 {
-                    // If the device hasn't sent data in the last 100 milliseconds,
-                    // a timeout error (ec = IoTimedOut) will occur. 
-                    ec = reader.Read(readBuffer, 100, out int bytesRead);
+                    // If the device hasn't sent data in the last 5000 milliseconds,
+                    // a timeout error (ec = IoTimedOut) will occur.
+                    // Was originally 100 ms but it seems that when authentication is enabled it can cause large read delays.
+                    ec = reader.Read(readBuffer, 5000, out int bytesRead);
 
                     //Don't want to throw this exception, authentication may be enabled!
                     //if (bytesRead == 0) throw new Exception("No more bytes!");
@@ -218,9 +166,11 @@ namespace UsbSession
         public int Read()
         {
             byte[] readBuffer = new byte[1000];
-                   
-            reader.Read(readBuffer, 0, out int bytesRead);
-            
+
+            ErrorCode ec = reader.Read(readBuffer, 5000, out int bytesRead);
+
+            if (ec != ErrorCode.None) throw new Exception("Reader error");
+
             return bytesRead;
         }
 
@@ -301,8 +251,10 @@ namespace UsbSession
             {
                 return Device.IsOpen;
             }
-
-            return false;
+            else
+            {
+                return false;
+            }
         } 
     }
 }

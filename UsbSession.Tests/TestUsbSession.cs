@@ -15,6 +15,7 @@ namespace UsbSession.Tests
         [Fact]
         public void TestOpenInvokeClose()
         {
+            output.WriteLine("Starting TestOpenInvokeClose");
             UsbSession s = new UsbSession();
             output.WriteLine("Opening Session");
             s.Open();
@@ -26,7 +27,7 @@ namespace UsbSession.Tests
             output.WriteLine("Buffer cleared. Logging in, sending username");
             output.WriteLine(s.Invoke("crestron"));
             output.WriteLine("Sending p/w");
-            output.WriteLine(s.Invoke("")); //Blank p/w
+            output.WriteLine(s.Invoke("")); //Most crestron devices default to Blank p/w
             System.Threading.Thread.Sleep(1000);
             output.WriteLine("Sending ECHO OFF");
             output.WriteLine(s.Invoke("ECHO OFF"));
@@ -35,6 +36,7 @@ namespace UsbSession.Tests
             output.WriteLine(s.Invoke("HOSTNAME"));
             s.Close();
             Assert.False(s.TestSession());
+            output.WriteLine("TestOpenInvokeClose passed.");
         }
 
         [Fact]
